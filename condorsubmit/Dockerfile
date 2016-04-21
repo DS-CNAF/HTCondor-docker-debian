@@ -23,6 +23,6 @@ RUN     sed -i '/#ALLOW_WRITE/a ALLOW_WRITE = * \nALLOW_READ = *' /etc/condor/co
 	sed -i 's/NEGOTIATOR, //g' /etc/condor/condor_config && \
 	sed -i 's/STARTD,//g' /etc/condor/condor_config && \
 	echo "DISCARD_SESSION_KEYRING_ON_STARTUP=False" >> /etc/condor/condor_config
-EXPOSE	22
-RUN 	mkdir /home/condor && chown condor. /home/condor
-CMD 	["/usr/bin/supervisord"]
+EXPOSE 	22
+RUN    mkdir /home/condor && chown condor. /home/condor
+ENTRYPOINT 	["/usr/bin/supervisord"]

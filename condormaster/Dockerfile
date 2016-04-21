@@ -19,4 +19,4 @@ COPY 	supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN	sed -i '/#ALLOW_WRITE/a ALLOW_WRITE = * \nALLOW_READ = *' /etc/condor/condor_config && \ 
 	sed -i 's/, SCHEDD, STARTD//g' /etc/condor/condor_config && \
 	echo "DISCARD_SESSION_KEYRING_ON_STARTUP=False" >> /etc/condor/condor_config
-CMD 	["/usr/bin/supervisord"]
+ENTRYPOINT 	["/usr/bin/supervisord"]
