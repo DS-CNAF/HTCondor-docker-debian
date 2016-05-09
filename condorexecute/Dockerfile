@@ -10,7 +10,7 @@ RUN	apt-get update && apt-get install -y wget procps && \
 	wget -qO - http://research.cs.wisc.edu/htcondor/debian/HTCondor-Release.gpg.key | apt-key add - && \
         export DEBIAN_FRONTEND=noninteractive && \ 
 	apt-get update && \
-	apt-get install condor=8.4.4-355883-deb7 -y --force-yes	
+	apt-get install condor -y --force-yes	
 RUN 	apt-get install -y supervisor && \
  	apt-get install -y python-pip && pip install supervisor-stdout 
 COPY 	supervisord.conf /etc/supervisor/conf.d/supervisord.conf
