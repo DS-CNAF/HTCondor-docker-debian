@@ -1,7 +1,7 @@
 # Docker container per HTCondor 
 
 Dockerizzazione di HTCondor dei tre nodi: Master, Submit ed Executor.
-L'immagine di base utilizzata è Debian Wheezy e si fa riferimento alla versione 8.4.4 di condor (https://research.cs.wisc.edu/htcondor/debian/).
+L'immagine di base utilizzata è Debian Wheezy e si fa riferimento alla versione stable di condor (https://research.cs.wisc.edu/htcondor/debian/).
 
 Per controllare e gestire i diversi processi lanciati nei singoli container, si utilizza supervisord.
 
@@ -28,16 +28,14 @@ Nodo Master:
 docker run -d --name=condormaster ds/condormaster
 ```
 
-Il nodo Submit è l'unico ad esporre ssh:
-
 ```bash 
-docker run -d -e MASTER=<MASTER_IP> --name=condorsubmit -P ds/condorsubmit
+docker run -d -e MASTER=<MASTER_IP> --name=condorsubmit ds/condorsubmit
 ```
 
 Lanciare un numero di nodi executor a piacere:
 
 ```bash 
-docker run -d -e MASTER=<MASTER_IP> --name=condorexecute -P ds/condorexecute
+docker run -d -e MASTER=<MASTER_IP> --name=condorexecute ds/condorexecute
 ```
 
 ### LOGS
@@ -46,7 +44,5 @@ docker logs <nome_container>
 ```
 ## TBD
 
-* Gestione della rete su container deployati in host diversi
 * Gestione della sicurezza
-* Deploy della chiave ssh (solo per il nodo Submit) assegnata ad un utente non-root
 * Sistemare i log
