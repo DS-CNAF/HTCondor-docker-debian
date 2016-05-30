@@ -13,29 +13,29 @@ Per controllare e gestire i diversi processi lanciati nei singoli container, si 
 
 ### Build dell'immagine 
 
-Per ogni nodo (e directory) fare il build dell'immagine docker.
+Se si vuole compilare da codice: per ogni nodo (e directory) fare il build dell'immagine docker.
 
 ```bash
-docker build --tag ds/condormaster condormaster/
-docker build --tag ds/condorexecute condorexecute/
-docker build --tag ds/condorsubmit condorsubmit/
+docker build --tag dscnaf/htcondor-docker-debian-master condormaster/
+docker build --tag dscnaf/htcondor-docker-debian-execute condorexecute/
+docker build --tag dscnaf/htcondor-docker-debian-submit condorsubmit/
 ```
 
 ### Run dei nodi
 Nodo Master:
 
 ```bash 
-docker run -d --name=condormaster ds/condormaster
+docker run -d --name=condormaster dscnaf/htcondor-docker-debian-master
 ```
 
 ```bash 
-docker run -d -e MASTER=<MASTER_IP> --name=condorsubmit ds/condorsubmit
+docker run -d -e MASTER=<MASTER_IP> --name=condorsubmit dscnaf/htcondor-docker-debian-submit
 ```
 
 Lanciare un numero di nodi executor a piacere:
 
 ```bash 
-docker run -d -e MASTER=<MASTER_IP> --name=condorexecute ds/condorexecute
+docker run -d -e MASTER=<MASTER_IP> --name=condorexecute dscnaf/htcondor-docker-debian-execute
 ```
 
 ### LOGS
