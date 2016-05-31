@@ -5,8 +5,6 @@
 
 FROM 	debian:wheezy
 MAINTAINER Riccardo Bucchi <riccardo.bucchi26@gmail.com>
-#ENV	http_proxy http://squid.grid.cnaf.infn.it:3128
-#ENV	https_proxy https://squid.grid.cnaf.infn.it:3128
 RUN	apt-get update && apt-get install -y wget procps && \
 	echo "deb http://research.cs.wisc.edu/htcondor/debian/stable/ wheezy contrib" >> /etc/apt/sources.list && \ 
 	wget -qO - http://research.cs.wisc.edu/htcondor/debian/HTCondor-Release.gpg.key | apt-key add - && \
