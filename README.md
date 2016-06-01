@@ -16,14 +16,14 @@ Per controllare e gestire i diversi processi lanciati nei singoli container, si 
 Se si vuole compilare da codice fare il build dell'immagine docker.
 
 ```bash
-$ docker build --tag dscnaf/htcondor-docker-debian .
+$ docker build --tag dscnaf/htcondor-debian .
 ```
 
 ### Run dei nodi
 Nodo Master:
 
 ```bash 
-$ docker run -d --name=condormaster dscnaf/htcondor-docker-debian -m
+$ docker run -d --name=condormaster dscnaf/htcondor-debian -m
 $ docker exec -it condormaster ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -40,13 +40,13 @@ $ docker exec -it condormaster ip addr
 ```
 
 ```bash 
-$ docker run -d --name=condorsubmit dscnaf/htcondor-docker-debian -s <MASTER_IP>
+$ docker run -d --name=condorsubmit dscnaf/htcondor-debian -s <MASTER_IP>
 ```
 
 Lanciare un numero di nodi executor a piacere:
 
 ```bash 
-$ docker run -d --name=condorexecute dscnaf/htcondor-docker-debian -e <MASTER_IP>
+$ docker run -d --name=condorexecute dscnaf/htcondor-debian -e <MASTER_IP>
 ```
 
 ### LOGS
@@ -75,7 +75,7 @@ Inbound rules:
    1 allow from tag calinet1
 Outbound rules:
    1 allow
-core@calico-01 ~ $ docker run -d --net=calinet1 --name=condormaster dscnaf/htcondor-docker-debian-master
+core@calico-01 ~ $ docker run -d --net=calinet1 --name=condormaster dscnaf/htcondor-debian -m
 core@calico-01 ~ $ docker exec -it condormaster ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -91,8 +91,8 @@ core@calico-01 ~ $ docker exec -it condormaster ip addr
        valid_lft forever preferred_lft forever
     inet6 fe80::ecee:eeff:feee:eeee/64 scope link
        valid_lft forever preferred_lft forever
-core@calico-0(x) ~ $ docker run -d -e MASTER=192.168.142.0 --net=calinet1 --name=condorsubmit dscnaf/htcondor-docker-debian-submit
-core@calico-0(x) ~ $ docker run -d -e MASTER=192.168.142.0 --net=calinet1 --name=condorexecute dscnaf/htcondor-docker-debian-execute
+core@calico-0(x) ~ $ docker run -d --net=calinet1 --name=condorsubmit dscnaf/htcondor-debian -s 192.168.142.0
+core@calico-0(x) ~ $ docker run -d --net=calinet1 --name=condorexecute dscnaf/htcondor-debian -e 192.168.142.0
 core@calico-0(x) ~ $ docker exec -it condorexecute ping 192.168.142.0
 PING 192.168.142.0 (192.168.142.0): 48 data bytes
 56 bytes from 192.168.142.0: icmp_seq=0 ttl=62 time=0.048 ms
