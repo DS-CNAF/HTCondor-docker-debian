@@ -13,29 +13,40 @@ Per controllare e gestire i diversi processi lanciati nei singoli container, si 
 
 ### Build dell'immagine 
 
-Se si vuole compilare da codice: per ogni nodo (e directory) fare il build dell'immagine docker.
+Se si vuole compilare da codice fare il build dell'immagine docker.
 
 ```bash
-docker build --tag dscnaf/htcondor-docker-debian-master condormaster/
-docker build --tag dscnaf/htcondor-docker-debian-execute condorexecute/
-docker build --tag dscnaf/htcondor-docker-debian-submit condorsubmit/
+$ docker build --tag dscnaf/htcondor-docker-debian
 ```
 
 ### Run dei nodi
 Nodo Master:
 
 ```bash 
-docker run -d --name=condormaster dscnaf/htcondor-docker-debian-master
+$ docker run -d --name=condormaster dscnaf/htcondor-docker-debian -m
+$ docker exec -it condormaster ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+32: eth0@if33: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.2/16 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:acff:fe11:2/64 scope link
+       valid_lft forever preferred_lft forever
 ```
 
 ```bash 
-docker run -d -e MASTER=<MASTER_IP> --name=condorsubmit dscnaf/htcondor-docker-debian-submit
+$ docker run -d --name=condorsubmit dscnaf/htcondor-docker-debian -s <MASTER_IP>
 ```
 
 Lanciare un numero di nodi executor a piacere:
 
 ```bash 
-docker run -d -e MASTER=<MASTER_IP> --name=condorexecute dscnaf/htcondor-docker-debian-execute
+$ docker run -d --name=condorexecute dscnaf/htcondor-docker-debian -e <MASTER_IP>
 ```
 
 ### LOGS
@@ -98,6 +109,7 @@ core@calico-01 ~ $ docker exec -it condorsubmit bash
 root@854b194757b8:/# useradd -m -s /bin/bash john
 root@854b194757b8:/# su - john
 john@854b194757b8:~$ cat > sleep.sh << EOF
+#!/bin/bash
 /bin/sleep 20
 EOF
 john@854b194757b8:~$ cat > sleep.sub << EOF
