@@ -1,4 +1,4 @@
-#####################################################################
+######################################################################
 ##
 ##  condor_config
 ##
@@ -18,7 +18,7 @@
 ##
 ######################################################################
 
-##  Where have you installed the bin, sbin and lib condor directories?   
+##  Where have you installed the bin, sbin and lib condor directories?
 RELEASE_DIR = /usr
 
 ##  Where is the local condor directory for each host?  This is where the local config file(s), logs and
@@ -41,15 +41,15 @@ LOCAL_CONFIG_DIR = /etc/condor/config.d
 ##  Use a host-based security policy. By default CONDOR_HOST and the local machine will be allowed
 use SECURITY : HOST_BASED
 ##  To expand your condor pool beyond a single host, set ALLOW_WRITE to match all of the hosts
+ALLOW_READ = *
 ALLOW_WRITE = *
-ALLOW_READ  = *
 ##  FLOCK_FROM defines the machines that grant access to your pool via flocking. (i.e. these machines can join your pool).
 #FLOCK_FROM =
 ##  FLOCK_TO defines the central managers that your schedd will advertise itself to (i.e. these pools will give matches to your schedd).
 #FLOCK_TO = condor.cs.wisc.edu, cm.example.edu
 
 ##--------------------------------------------------------------------
-## Values set by the debian patch script:
+## Values set by the rpm patch script:
 ##--------------------------------------------------------------------
 
 ## For Unix machines, the path and file name of the file containing
@@ -63,21 +63,22 @@ LOCK    = $(LOCAL_DIR)/lock/condor
 SPOOL   = $(LOCAL_DIR)/lib/condor/spool
 EXECUTE = $(LOCAL_DIR)/lib/condor/execute
 BIN     = $(RELEASE_DIR)/bin
-LIB     = $(RELEASE_DIR)/lib/condor
+LIB = $(RELEASE_DIR)/lib64/condor
 INCLUDE = $(RELEASE_DIR)/include/condor
 SBIN    = $(RELEASE_DIR)/sbin
-LIBEXEC = $(RELEASE_DIR)/lib/condor/libexec
+LIBEXEC = $(RELEASE_DIR)/libexec/condor
 SHARE   = $(RELEASE_DIR)/share/condor
 
 PROCD_ADDRESS = $(RUN)/procd_pipe
 
+JAVA_CLASSPATH_DEFAULT = $(SHARE) $(SHARE)/scimark2lib.jar .
+
 ##  What machine is your central manager?
 
-CONDOR_HOST = $(FULL_HOSTNAME)
+CONDOR_HOST = @CONDOR_HOST@
 
 ##  This macro determines what daemons the condor_master will start and keep its watchful eyes on.
 ##  The list is a comma or space separated list of subsystem names
 
-DAEMON_LIST = MASTER, STARTD
-DISCARD_SESSION_KEYRING_ON_STARTUP=False
-
+DAEMON_LIST = MASTER, @ROLE_DAEMONS@
+DISCARD_SESSION_KEYRING_ON_STARTUP = False

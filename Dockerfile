@@ -20,12 +20,6 @@ RUN	set -ex \
         && apt-get clean all 
 
 COPY 	supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-# Condor configs: either copy a local file or change DAEMONLIST and SESSION_KEYRING
-# #COPY   condor_config /etc/condor/condor_config
-RUN     sed -i '/#ALLOW_WRITE/a ALLOW_WRITE = * \nALLOW_READ = *' /etc/condor/condor_config && \
-	sed -i 's/COLLECTOR, //g' /etc/condor/condor_config && \
-	sed -i 's/NEGOTIATOR, //g' /etc/condor/condor_config && \
-	sed -i 's/STARTD,//g' /etc/condor/condor_config && \
-	echo "DISCARD_SESSION_KEYRING_ON_STARTUP=False" >> /etc/condor/condor_config
+COPY    condor_config /etc/condor/condor_config
 COPY    run.sh /usr/local/sbin/run.sh
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/sbin/run.sh"]
