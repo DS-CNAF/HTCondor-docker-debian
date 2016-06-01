@@ -16,7 +16,7 @@ Per controllare e gestire i diversi processi lanciati nei singoli container, si 
 Se si vuole compilare da codice fare il build dell'immagine docker.
 
 ```bash
-$ docker build --tag dscnaf/htcondor-docker-debian
+$ docker build --tag dscnaf/htcondor-docker-debian .
 ```
 
 ### Run dei nodi
