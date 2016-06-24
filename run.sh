@@ -2,6 +2,9 @@
 
 # Configure HTCondor and fire up supervisord
 # Daemons for each role
+set -x
+env 
+
 MASTER_DAEMONS="COLLECTOR, NEGOTIATOR"
 EXECUTOR_DAEMONS="STARTD"
 SUBMITTER_DAEMONS="SCHEDD"
@@ -16,6 +19,7 @@ usage() {
 	  -m                configure container as HTCondor master
 	  -e master-address configure container as HTCondor executor for the given master
 	  -s master-address configure container as HTCondor submitter for the given master
+	  
 	EOF
   exit 1
 }
@@ -23,7 +27,7 @@ usage() {
 # Get our options
 ROLE_DAEMONS=
 CONDOR_HOST=
-while getopts ':me:s:' OPTION; do
+while getopts ':me:s:t:p:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
@@ -39,6 +43,17 @@ while getopts ':me:s:' OPTION; do
       [ -n "$ROLE_DAEMONS" -o -z "$OPTARG" ] && usage
       ROLE_DAEMONS="$SUBMITTER_DAEMONS"
       CONDOR_HOST="$OPTARG"
+    ;;
+    t)
+      [ -z "$OPTARG" ] && usage
+      export ONECLIENT_AUTHORIZATION_TOKEN=$OPTARG
+    ;;
+    p)
+      [ -z "$OPTARG" ] && usage
+      export PROVIDER_HOSTNAME=$OPTARG
+    ;;
+    *)
+      usage
     ;;
   esac
 done
