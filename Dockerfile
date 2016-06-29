@@ -2,7 +2,7 @@
 # Based on debian:wheezy, installs HTCondor following the instructions from:
 # https://research.cs.wisc.edu/htcondor/debian/
 
-FROM 	   ubuntu:15.10	
+FROM 	   ubuntu:14.04
 MAINTAINER Riccardo Bucchi <riccardo.bucchi26@gmail.com>
 ENV 	   TINI_VERSION v0.9.0
 

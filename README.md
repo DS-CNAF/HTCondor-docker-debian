@@ -1,7 +1,7 @@
 # Docker container per HTCondor 
 
 Dockerizzazione di HTCondor dei tre nodi: Master, Submit ed Executor.
-L'immagine di base utilizzata è Ubunty Wily e si fa riferimento alla versione stable di condor (https://research.cs.wisc.edu/htcondor/ubuntu/).
+L'immagine di base utilizzata è Ubunty Trusty LTS e si fa riferimento alla versione stable di condor (https://research.cs.wisc.edu/htcondor/ubuntu/).
 
 Per controllare e gestire i diversi processi lanciati nei singoli container, si utilizza supervisord.
 
