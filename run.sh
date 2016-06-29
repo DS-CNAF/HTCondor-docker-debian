@@ -1,25 +1,23 @@
 #!/bin/bash
-
 # Configure HTCondor and fire up supervisord
 # Daemons for each role
-set -x
-env 
-
 MASTER_DAEMONS="COLLECTOR, NEGOTIATOR"
 EXECUTOR_DAEMONS="STARTD"
 SUBMITTER_DAEMONS="SCHEDD"
 
 usage() {
   cat <<-EOF
-	usage: $0 -m|-e master-address|-s master-address
+	usage: $0 -m|-e master-address|-s master-address [-p PROVIDER -t TOKEN [-d MOUNTPOINT]]
 	
-	Configure HTCondor role and start supervisord for this container
+	Configure HTCondor role and start supervisord for this container. 
 	
 	OPTIONS:
 	  -m                configure container as HTCondor master
 	  -e master-address configure container as HTCondor executor for the given master
 	  -s master-address configure container as HTCondor submitter for the given master
-	  
+	  -p ip-address	    ip address of the onedata provider.
+          -t token	    onedata client token
+          -d mount point    onedata mount point. /mnt/oneclient if not specified.
 	EOF
   exit 1
 }
@@ -27,7 +25,10 @@ usage() {
 # Get our options
 ROLE_DAEMONS=
 CONDOR_HOST=
-while getopts ':me:s:t:p:' OPTION; do
+ONECLIENT_AUTHORIZATION_TOKEN=
+PROVIDER_HOSTNAME=
+ONEDATA_MOUNTPOINT=/mnt/oneclient
+while getopts ':me:s:t:p:d:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
@@ -52,11 +53,17 @@ while getopts ':me:s:t:p:' OPTION; do
       [ -z "$OPTARG" ] && usage
       export PROVIDER_HOSTNAME=$OPTARG
     ;;
+    d)
+      [ -z "$OPTARG" ] && usage
+      ONEDATA_MOUNTPOINT=$OPTARG
+    ;;
     *)
       usage
     ;;
   esac
 done
+
+export ONEDATA_MOUNTPOINT
 
 # Prepare HTCondor configuration
 sed -i \
