@@ -56,7 +56,7 @@ $ docker run -d --name=condorexecute dscnaf/htcondor-debian -e <MASTER_IP>
 Su qualsiasi tipo di container (master, submitter o executor) è possibile utilizzare onedata per l'accesso remoto di dati: https://onedata.org/
 
 ```bash
-$ docker run -d --name=condor<TYPE> dscnaf/htcondor-debian -<TYPE> -t <TOKEN> -p <PROVIDER> [-d <MOUNT_POINT>]
+$ docker run -d --privileged --name=condor<TYPE> dscnaf/htcondor-debian -<TYPE> -t <TOKEN> -p <PROVIDER> [-d <MOUNT_POINT>]
 ```
 
 ### LOGS
