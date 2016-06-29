@@ -1,9 +1,11 @@
 # Docker container per HTCondor 
 
 Dockerizzazione di HTCondor dei tre nodi: Master, Submit ed Executor.
-L'immagine di base utilizzata è Debian Wheezy e si fa riferimento alla versione stable di condor (https://research.cs.wisc.edu/htcondor/debian/).
+L'immagine di base utilizzata è Ubunty Wily e si fa riferimento alla versione stable di condor (https://research.cs.wisc.edu/htcondor/ubuntu/).
 
 Per controllare e gestire i diversi processi lanciati nei singoli container, si utilizza supervisord.
+
+E' possibile utilizzare Oneclient per esportare i dati.
 
 ## Architettura di riferimento
 
@@ -47,6 +49,14 @@ Lanciare un numero di nodi executor a piacere:
 
 ```bash 
 $ docker run -d --name=condorexecute dscnaf/htcondor-debian -e <MASTER_IP>
+```
+
+### Uso di Oneclient
+
+Su qualsiasi tipo di container (master, submitter o executor) è possibile utilizzare onedata per l'accesso remoto di dati: https://onedata.org/
+
+```bash
+$ docker run -d --name=condor<TYPE> dscnaf/htcondor-debian -<TYPE> -t <TOKEN> -p <PROVIDER> [-d <MOUNT_POINT>]
 ```
 
 ### LOGS
