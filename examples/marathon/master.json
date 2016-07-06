@@ -1,0 +1,15 @@
+{
+  "id": "htcondor-master-debian",
+  "args": ["-m"],
+  "cpus": 1,
+  "mem": 512.0,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "dscnaf/htcondor-debian",
+      "parameters": [
+        {"key": "net", "value": "htcondor-net"}
+      ]
+    }
+  }
+}

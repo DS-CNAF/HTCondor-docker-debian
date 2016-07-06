@@ -58,6 +58,13 @@ Su qualsiasi tipo di container (master, submitter o executor) è possibile utili
 ```bash
 $ docker run -d --name=condor<TYPE> dscnaf/htcondor-debian -<TYPE> -t <TOKEN> -p <PROVIDER> [-d <MOUNT_POINT>]
 ```
+### Run in Marathon
+
+Nella directory examples/marathon sono presenti i file .json per lanciare i container su un cluster mesos/marathon con connettività via Calico. examples/marathon/executor.json contiene inoltre l'esempio per collegare un container (qualsiasi) a Oneprovider. E' necessario garantire la connettività all'esterno (calico pool con --nat-outgoing).
+
+```bash
+curl -XPOST -H "Content-Type: application/json" http://<MARATHON_IP>/v2/apps -d @<FILE.json>
+```
 
 ### LOGS
 ```bash
@@ -84,8 +91,7 @@ core@calico-01 ~ $ calicoctl profile calinet1 rule show
 Inbound rules:
    1 allow from tag calinet1
 Outbound rules:
-   1 allow
-core@calico-01 ~ $ docker run -d --net=calinet1 --name=condormaster dscnaf/htcondor-debian -m
+
 core@calico-01 ~ $ docker exec -it condormaster ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00

@@ -1,0 +1,17 @@
+{
+  "id": "htcondor-submitter-debian",
+  "args": ["-s", "<MASTER_IP>"],
+  "cpus": 1,
+  "mem": 512.0,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "dscnaf/htcondor-debian",
+      "forcePullImage": true,
+      "parameters": [
+        {"key": "net", "value": "htcondor-net"}
+      ]
+    }
+  }
+}
+
