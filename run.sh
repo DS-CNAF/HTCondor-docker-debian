@@ -7,7 +7,7 @@ SUBMITTER_DAEMONS="SCHEDD"
 
 usage() {
   cat <<-EOF
-	usage: $0 -m|-e master-address|-s master-address [-p PROVIDER -t TOKEN [-d MOUNTPOINT]]
+	usage: $0 -m|-e master-address|-s master-address 
 	
 	Configure HTCondor role and start supervisord for this container. 
 	
@@ -15,9 +15,6 @@ usage() {
 	  -m                configure container as HTCondor master
 	  -e master-address configure container as HTCondor executor for the given master
 	  -s master-address configure container as HTCondor submitter for the given master
-	  -p ip-address	    ip address of the onedata provider.
-          -t token	    onedata client token
-          -d mount point    onedata mount point. /mnt/oneclient if not specified.
 	EOF
   exit 1
 }
@@ -28,7 +25,7 @@ CONDOR_HOST=
 ONECLIENT_AUTHORIZATION_TOKEN=
 PROVIDER_HOSTNAME=
 ONEDATA_MOUNTPOINT=/mnt/oneclient
-while getopts ':me:s:t:p:d:' OPTION; do
+while getopts ':me:s:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
@@ -44,18 +41,6 @@ while getopts ':me:s:t:p:d:' OPTION; do
       [ -n "$ROLE_DAEMONS" -o -z "$OPTARG" ] && usage
       ROLE_DAEMONS="$SUBMITTER_DAEMONS"
       CONDOR_HOST="$OPTARG"
-    ;;
-    t)
-      [ -z "$OPTARG" ] && usage
-      export ONECLIENT_AUTHORIZATION_TOKEN=$OPTARG
-    ;;
-    p)
-      [ -z "$OPTARG" ] && usage
-      export PROVIDER_HOSTNAME=$OPTARG
-    ;;
-    d)
-      [ -z "$OPTARG" ] && usage
-      ONEDATA_MOUNTPOINT=$OPTARG
     ;;
     *)
       usage

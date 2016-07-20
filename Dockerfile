@@ -29,5 +29,4 @@ RUN	set -ex \
 COPY 	supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY    condor_config /etc/condor/condor_config
 COPY    run.sh /usr/local/sbin/run.sh
-COPY    oneclient-wrapper.sh /usr/local/sbin/oneclient-wrapper.sh
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/sbin/run.sh"]
