@@ -8,6 +8,7 @@ app = Flask(__name__)
 def health():
   coll = htcondor.Collector(socket.gethostname())
   try:
+    ## retrieve workers
     results = coll.query(htcondor.AdTypes.Startd, "true", ["Name"])
     return "OK" 
   except:

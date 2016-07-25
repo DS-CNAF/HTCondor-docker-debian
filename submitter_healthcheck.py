@@ -6,14 +6,13 @@ app = Flask(__name__)
 
 @app.route("/health")
 def health():
-  ## TODO
-  return "OK" #VW method
-#  coll = htcondor.Collector(socket.gethostname())
-#  try:
-#    results = coll.query(htcondor.AdTypes.Startd, "true", ["Name"])
-#    return "OK" 
-#  except:
-#    abort(401) 
+  try:
+    for schedd_ad in htcondor.Collector().locateAll(htcondor.DaemonTypes.Schedd):
+      if schedd_ad['Machine'] == socket.gethostname():
+        return "OK"
+    abort(401) 
+  except:
+    abort(401) 
 
 if __name__ == '__main__':
     app.run(host= '0.0.0.0')
