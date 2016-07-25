@@ -10,7 +10,7 @@ def health():
   try:
     ## retrieve workers
     results = coll.query(htcondor.AdTypes.Startd, "true", ["Name"])
-    return "OK" 
+    return 'OK', 200
   except:
     abort(401) 
 

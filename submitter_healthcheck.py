@@ -9,7 +9,7 @@ def health():
   try:
     for schedd_ad in htcondor.Collector().locateAll(htcondor.DaemonTypes.Schedd):
       if schedd_ad['Machine'] == socket.gethostname():
-        return "OK"
+        return 'OK', 200
     abort(401) 
   except:
     abort(401) 
