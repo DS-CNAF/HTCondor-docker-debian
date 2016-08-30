@@ -22,9 +22,7 @@ usage() {
 # Get our options
 ROLE_DAEMONS=
 CONDOR_HOST=
-ONECLIENT_AUTHORIZATION_TOKEN=
 PROVIDER_HOSTNAME=
-ONEDATA_MOUNTPOINT=/mnt/oneclient
 while getopts ':me:s:' OPTION; do
   case $OPTION in
     m)
@@ -47,8 +45,6 @@ while getopts ':me:s:' OPTION; do
     ;;
   esac
 done
-
-export ONEDATA_MOUNTPOINT
 
 # Prepare HTCondor configuration
 sed -i \
