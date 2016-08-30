@@ -24,7 +24,7 @@ RUN	set -ex \
 	&& ./oneclient.sh \
         && mkdir /var/log/oneclient \
 	# CLEAN
-	&& apt-get -y remove wget python-pip \
+	&& apt-get -y remove python-pip \
         && apt-get clean all 
 COPY 	supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY    condor_config /etc/condor/condor_config
