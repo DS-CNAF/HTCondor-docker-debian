@@ -7,7 +7,7 @@ SUBMITTER_DAEMONS="SCHEDD"
 
 usage() {
   cat <<-EOF
-	usage: $0 -m|-e master-address|-s master-address 
+	usage: $0 -m|-e master-address|-s master-address [-u url-to-config]
 	
 	Configure HTCondor role and start supervisord for this container. 
 	
@@ -15,15 +15,20 @@ usage() {
 	  -m                configure container as HTCondor master
 	  -e master-address configure container as HTCondor executor for the given master
 	  -s master-address configure container as HTCondor submitter for the given master
+	  -u url-to-config  config file reference from http url.
 	EOF
   exit 1
 }
+
+# Syntax checks
+CONFIG_MODE=
 
 # Get our options
 ROLE_DAEMONS=
 CONDOR_HOST=
 HEALTH_CHECKS=
-while getopts ':me:s:' OPTION; do
+CONFIG_URL=
+while getopts ':me:s:u:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
@@ -37,6 +42,11 @@ while getopts ':me:s:' OPTION; do
       CONDOR_HOST="$OPTARG"
       HEALTH_CHECK='executor'
     ;;
+    u)
+      [ -n "$CONFIG_MODE" -o -z "$OPTARG" ] && usage
+      CONFIG_MODE='http'
+      CONFIG_URL="$OPTARG"
+    ;;
     s)
       [ -n "$ROLE_DAEMONS" -o -z "$OPTARG" ] && usage
       ROLE_DAEMONS="$SUBMITTER_DAEMONS"
@@ -48,6 +58,10 @@ while getopts ':me:s:' OPTION; do
     ;;
   esac
 done
+
+if [ $CONFIG_MODE ]; then
+  wget "$CONFIG_URL" /etc/condor/condor_config
+fi
 
 # Prepare HTCondor configuration
 sed -i \

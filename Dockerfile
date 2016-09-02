@@ -28,7 +28,7 @@ RUN	set -ex \
 	&& mkdir -p /opt/health/master/ /opt/health/executor/ /opt/health/submitter/ \
 	&& apt-get install -y python-pip && pip install Flask \
 	# CLEAN
-	&& apt-get -y remove wget python-pip \
+	&& apt-get -y remove python-pip \
         && apt-get clean all 
 COPY 	supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY    condor_config /etc/condor/condor_config
