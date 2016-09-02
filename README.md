@@ -84,7 +84,8 @@ curl -XPOST -H "Content-Type: application/json" http://<MARATHON_IP>/v2/apps -d 
 ```
 #### Known issue
 
-L'operazione di unmount è a carico dell'utente. Questo potrebbe lasciare dei mount point appesi sugli executor.
+* L'operazione di unmount è a carico dell'utente. Questo potrebbe lasciare dei mount point appesi sugli executor.
+* Healthchecks completi solo dalla versione Marathon >= 1.2.0. 
 
 ### LOGS
 ```bash
