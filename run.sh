@@ -22,23 +22,26 @@ usage() {
 # Get our options
 ROLE_DAEMONS=
 CONDOR_HOST=
-PROVIDER_HOSTNAME=
+HEALTH_CHECKS=
 while getopts ':me:s:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
       ROLE_DAEMONS="$MASTER_DAEMONS"
       CONDOR_HOST='$(FULL_HOSTNAME)'
+      HEALTH_CHECK='master'
     ;;
     e)
       [ -n "$ROLE_DAEMONS" -o -z "$OPTARG" ] && usage
       ROLE_DAEMONS="$EXECUTOR_DAEMONS"
       CONDOR_HOST="$OPTARG"
+      HEALTH_CHECK='executor'
     ;;
     s)
       [ -n "$ROLE_DAEMONS" -o -z "$OPTARG" ] && usage
       ROLE_DAEMONS="$SUBMITTER_DAEMONS"
       CONDOR_HOST="$OPTARG"
+      HEALTH_CHECK='submitter'
     ;;
     *)
       usage
@@ -51,5 +54,10 @@ sed -i \
   -e 's/@CONDOR_HOST@/'"$CONDOR_HOST"'/' \
   -e 's/@ROLE_DAEMONS@/'"$ROLE_DAEMONS"'/' \
   /etc/condor/condor_config
+
+# Prepare right HTCondor healthchecks
+sed -i \
+  -e 's/@ROLE@/'"$HEALTH_CHECK"'/' \
+  /etc/supervisor/conf.d/supervisord.conf
 
 exec /usr/local/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
