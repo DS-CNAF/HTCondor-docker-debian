@@ -7,15 +7,16 @@ SUBMITTER_DAEMONS="SCHEDD"
 
 usage() {
   cat <<-EOF
-	usage: $0 -m|-e master-address|-s master-address [-u url-to-config]
+	usage: $0 -m|-e master-address|-s master-address [-u url-to-config] [-k url-to-public-key]
 	
 	Configure HTCondor role and start supervisord for this container. 
 	
 	OPTIONS:
-	  -m                configure container as HTCondor master
-	  -e master-address configure container as HTCondor executor for the given master
-	  -s master-address configure container as HTCondor submitter for the given master
-	  -u url-to-config  config file reference from http url.
+	  -m                	configure container as HTCondor master
+	  -e master-address 	configure container as HTCondor executor for the given master
+	  -s master-address 	configure container as HTCondor submitter for the given master
+	  -u url-to-config  	config file reference from http url.
+	  -k url-to-public-key	url to public key for ssh access
 	EOF
   exit 1
 }
@@ -28,7 +29,8 @@ ROLE_DAEMONS=
 CONDOR_HOST=
 HEALTH_CHECKS=
 CONFIG_URL=
-while getopts ':me:s:u:' OPTION; do
+KEY_URL=
+while getopts ':me:s:u:k:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
@@ -53,11 +55,19 @@ while getopts ':me:s:u:' OPTION; do
       CONDOR_HOST="$OPTARG"
       HEALTH_CHECK='submitter'
     ;;
+    k)
+      [ -n "$KEY_URL" -o -z "$OPTARG" ] && usage
+      KEY_URL="$OPTARG"
+    ;;  
     *)
       usage
     ;;
   esac
 done
+
+if [ $KEY_URL ]; then
+  wget -O - "$KEY_URL" /root/.ssh/authorized_keys
+fi
 
 if [ $CONFIG_MODE ]; then
   wget "$CONFIG_URL" /etc/condor/condor_config
