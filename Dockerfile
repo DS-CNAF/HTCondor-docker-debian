@@ -29,16 +29,16 @@ RUN	set -ex \
 	&& mkdir -p /opt/health/master/ /opt/health/executor/ /opt/health/submitter/ \
 	&& apt-get install -y python-pip && pip install Flask \
 	# SSHD
-	&& apt-get install openssh-server && mkdir -p /var/log/ssh/ && mkdir /var/run/sshd && mkdir /root/.ssh \
+	&& apt-get install -y openssh-server && mkdir -p /var/log/ssh/ && mkdir /var/run/sshd && mkdir /root/.ssh \
 	# CLEAN
 	&& apt-get -y remove python-pip \
         && apt-get clean all 
 COPY 	supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY    condor_config /etc/condor/condor_config
-COPY    run.sh /usr/local/sbin/run.sh
 COPY    master_healthcheck.py /opt/health/master/healthcheck.py
 COPY    executor_healthcheck.py /opt/health/executor/healthcheck.py
 COPY    submitter_healthcheck.py /opt/health/submitter/healthcheck.py
 COPY 	sshd_config /etc/ssh/sshd_config
+COPY    run.sh /usr/local/sbin/run.sh
 
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/sbin/run.sh"]
