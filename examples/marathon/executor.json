@@ -1,34 +1,25 @@
 {
-  "id": "/executor",
+  "id": "/exec",
   "cpus": 1,
   "mem": 512,
-  "instances": 4,
+  "instances": 2,
   "container": {
     "type": "DOCKER",
     "docker": {
       "image": "dscnaf/htcondor-debian",
-      "network": "USER",
+      "parameters": [
+        {
+          "key": "net",
+          "value": "htcondor"
+        }
+      ]
     }
   },
-  "ipAddress": {
-    "networkName": "my-calico-net"
-  },
-  "healthChecks": [
-    {
-      "path": "/health",
-      "protocol": "HTTP",
-      "gracePeriodSeconds": 300,
-      "intervalSeconds": 60,
-      "timeoutSeconds": 20,
-      "maxConsecutiveFailures": 3,
-      "ignoreHttp1xx": false,
-      "port": 5000
-    }
-  ],
   "args": [
     "-e",
-    "<MASTER_IP>",
+    "192.168.0.47",    
     "-u",
     "<CONFIG_URL>"
+
   ]
 }
