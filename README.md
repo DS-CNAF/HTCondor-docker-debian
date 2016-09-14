@@ -82,10 +82,75 @@ Nella directory examples/marathon sono presenti i file .json per lanciare i cont
 ```bash
 curl -XPOST -H "Content-Type: application/json" http://<MARATHON_IP>/v2/apps -d @<FILE.json>
 ```
+
+### Healthchecks
+
+```
+{
+  "id": "/htcondor",
+  "cpus": 1,
+  "mem": 512,
+  "instances": 4,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "dscnaf/htcondor-debian",
+      "network": "USER",
+    }
+  },
+        "ipAddress": {
+              "networkName": "my-calico-net"
+        },
+  "healthChecks": [
+    {
+      "path": "/health",
+      "protocol": "HTTP",
+      "gracePeriodSeconds": 300,
+      "intervalSeconds": 60,
+      "timeoutSeconds": 20,
+      "maxConsecutiveFailures": 3,
+      "ignoreHttp1xx": false,
+      "port": 5000
+    }
+  ],
+  "args": [
+    "-m"
+  ]
+}
+```
+
 #### Known issue
 
 * L'operazione di unmount è a carico dell'utente. Questo potrebbe lasciare dei mount point appesi sugli executor.
 * Healthchecks completi solo dalla versione Marathon >= 1.2.0. 
+
+### Accesso SSH
+
+I container vengono lanciati con il demone `sshd` disattivato di default. Se tuttavia è necessario l'accesso via ssh (e.g.: non è possibile accedere all'host ospitante il submitter per sottomettere i job condor), è possibile attivare il demone in due modi:
+
+1. via **password**:
+
+   lanciando il container con i parametri `-u` (user) e `-p` (password). Inietterà un solo utente senza privilegi di `root`
+```
+docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -u john -p j0hn
+```
+
+2. via **certificate**
+
+   lanciando il container con il parametro `-k` (public Key), il servizio ssh verrà attivato e la chiave pubblica passata verrò iniettata in `/root/.ssh/authorized_keys`.  Nota che il certificato dev'essere raggiungibile via `wget`. Il passaggio di file da file system locale non è possibile.
+```
+docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -k <url_to_public_key>
+```
+
+I due metodi sopra descritti non sono mutualmente esclusivi.
+
+### Modifica condor_config
+
+Lanciando il container con il parametro `-c` (file di Configurazione), è possibile iniettare all'istanza un file di configurazione condor diverso da quello di default. Nota che il file dev'essere raggiungibile via `wget`. Il passaggio di file da file system locale non è possibile.
+```
+docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -c <url_to_condor_config>
+```
+**Known issue** i parametri `DAEMON_LIST = MASTER, @ROLE_DAEMONS@` e `CONDOR_HOST = @CONDOR_HOST@` devono essere così popolati per permettere al passaggio dei parametri `-m`, `-s`, `-e` di avere effetto.  Un template diverso di `condor_config` richiede ugualmente che venga esplicitato il ruolo del container (master, submitter o executor), ma la gestione dei diversi file di configurazione è a carico dell'utente.
 
 ### LOGS
 ```bash
@@ -190,6 +255,22 @@ john@854b194757b8:~$ condor_q
 1 jobs; 0 completed, 0 removed, 0 idle, 1 running, 0 held, 0 suspended
 ```
 
+## Usage
+
+```
+	usage: $0 -m|-e master-address|-s master-address [-c url-to-config] [-k url-to-public-key] [-u inject user -p password]
+	
+	Configure HTCondor role and start supervisord for this container. 
+	
+	OPTIONS:
+	  -m                	configure container as HTCondor master
+	  -e master-address 	configure container as HTCondor executor for the given master
+	  -s master-address 	configure container as HTCondor submitter for the given master
+	  -c url-to-config  	config file reference from http url.
+	  -k url-to-public-key	url to public key for ssh access to root
+	  -u inject user	inject a user without root privileges for submitting jobs accessing via ssh. -p password required
+	  -p password		user password (see -u attribute).
+```
 ## TBD
 
 * Gestione della sicurezza

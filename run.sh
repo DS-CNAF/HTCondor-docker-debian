@@ -93,7 +93,7 @@ if [ -n "$KEY_URL" -a -n "$SSH_ACCESS" ]; then
 fi
 
 if [ -n "$USER" -a -n "$PASSWORD" -a -n "$SSH_ACCESS" ]; then
-  mkdir /home/$USER && useradd $USER -d /home/$USER -s /bin/bash && echo "$USER:$PASSWORD" | chpasswd
+  mkdir /home/$USER && useradd $USER -d /home/$USER -s /bin/bash && echo "$USER:$PASSWORD" | chpasswd && chown -R $USER. /home/$USER/
 fi;
 
 if [ -n "$SSH_ACCESS" ]; then
