@@ -1,0 +1,32 @@
+{
+  "id": "/submitter",
+  "cpus": 1,
+  "mem": 512,
+  "instances": 4,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "dscnaf/htcondor-debian",
+      "network": "USER",
+    }
+  },
+  "ipAddress": {
+    "networkName": "my-calico-net"
+   },
+  "healthChecks": [
+    {
+      "path": "/health",
+      "protocol": "HTTP",
+      "gracePeriodSeconds": 300,
+      "intervalSeconds": 60,
+      "timeoutSeconds": 20,
+      "maxConsecutiveFailures": 3,
+      "ignoreHttp1xx": false,
+      "port": 5000
+    }
+  ],
+  "args": [
+    "-s",
+    "<MASTER_IP>"
+  ]
+}

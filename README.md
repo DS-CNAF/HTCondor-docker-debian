@@ -53,11 +53,39 @@ $ docker run -d --name=condorexecute dscnaf/htcondor-debian -e <MASTER_IP>
 
 ### Uso di Oneclient
 
-Su qualsiasi tipo di container (master, submitter o executor) è possibile utilizzare onedata per l'accesso remoto di dati: https://onedata.org/
+All'interno dei container è prevista la presenza di oneclient per l'accesso esterno dei dati. L'utente può così utilizzare contestualmente al run del job il mount del FS all'interno della sua sandbox.
+Per poterlo utilizzare sono necessari i seguenti requisiti:
+* accesso ad un oneprovider
+* connettività esterna (via --nat-outgoing nel caso dell'utilizzo di Calico)
+* container privilegiato (--privileged)
 
 ```bash
-$ docker run -d --privileged --name=condor<TYPE> dscnaf/htcondor-debian -<TYPE> -t <TOKEN> -p <PROVIDER> [-d <MOUNT_POINT>]
+$ docker run -d --name=condor<TYPE> --privileged dscnaf/htcondor-debian -e <MASTER_IP>
+## on submitter
+john@submitter:~$ cat touch.sh 
+#!/bin/bash
+set -ex
+export ONECLIENT_AUTHORIZATION_TOKEN=xxxxxxxxxxxxxxxxxxxx
+export PROVIDER_HOSTNAME=<ENDPOINT>
+mkdir oneclient
+oneclient --no_check_certificate --authentication token oneclient
+cd oneclient/John\'s\ space
+touch imhere.txt
+cd ../..
+fusermount -u oneclient 
 ```
+
+### Run in Marathon
+
+Nella directory examples/marathon sono presenti i file .json per lanciare i container su un cluster mesos/marathon con connettività via Calico. examples/marathon/executor.json contiene inoltre l'esempio per collegare un container (qualsiasi) a Oneprovider. E' necessario garantire la connettività all'esterno (calico pool con --nat-outgoing).
+
+```bash
+curl -XPOST -H "Content-Type: application/json" http://<MARATHON_IP>/v2/apps -d @<FILE.json>
+```
+#### Known issue
+
+* L'operazione di unmount è a carico dell'utente. Questo potrebbe lasciare dei mount point appesi sugli executor.
+* Healthchecks completi solo dalla versione Marathon >= 1.2.0. 
 
 ### LOGS
 ```bash
@@ -84,8 +112,7 @@ core@calico-01 ~ $ calicoctl profile calinet1 rule show
 Inbound rules:
    1 allow from tag calinet1
 Outbound rules:
-   1 allow
-core@calico-01 ~ $ docker run -d --net=calinet1 --name=condormaster dscnaf/htcondor-debian -m
+
 core@calico-01 ~ $ docker exec -it condormaster ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
