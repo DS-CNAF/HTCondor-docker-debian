@@ -13,14 +13,6 @@ E' possibile utilizzare Oneclient per esportare i dati.
 
 ## Come utilizzare i Dockerfile
 
-### Build dell'immagine 
-
-Se si vuole compilare da codice fare il build dell'immagine docker.
-
-```bash
-$ docker build --tag dscnaf/htcondor-debian .
-```
-
 ### Run dei nodi
 Nodo Master:
 
@@ -77,7 +69,7 @@ fusermount -u oneclient
 
 ### Run in Marathon
 
-Nella directory examples/marathon sono presenti i file .json per lanciare i container su un cluster mesos/marathon con connettività via Calico. examples/marathon/executor.json contiene inoltre l'esempio per collegare un container (qualsiasi) a Oneprovider. E' necessario garantire la connettività all'esterno (calico pool con --nat-outgoing).
+Nella directory examples/marathon sono presenti i file .json per lanciare i container su un cluster mesos/marathon con connettività via Calico. Gli esempi sono comprensivi di vari parametri facoltativi spiegati nella sezione **Usage** o nelle sezioni specifiche. Per ulteriori accorgimenti, fare riferimento alla pagina ufficiale della [documentazione](https://mesosphere.github.io/marathon/docs/) Marathon.
 
 ```bash
 curl -XPOST -H "Content-Type: application/json" http://<MARATHON_IP>/v2/apps -d @<FILE.json>
@@ -85,44 +77,14 @@ curl -XPOST -H "Content-Type: application/json" http://<MARATHON_IP>/v2/apps -d 
 
 ### Healthchecks
 
-```
-{
-  "id": "/htcondor",
-  "cpus": 1,
-  "mem": 512,
-  "instances": 4,
-  "container": {
-    "type": "DOCKER",
-    "docker": {
-      "image": "dscnaf/htcondor-debian",
-      "network": "USER",
-    }
-  },
-        "ipAddress": {
-              "networkName": "my-calico-net"
-        },
-  "healthChecks": [
-    {
-      "path": "/health",
-      "protocol": "HTTP",
-      "gracePeriodSeconds": 300,
-      "intervalSeconds": 60,
-      "timeoutSeconds": 20,
-      "maxConsecutiveFailures": 3,
-      "ignoreHttp1xx": false,
-      "port": 5000
-    }
-  ],
-  "args": [
-    "-m"
-  ]
-}
-```
+Gli healthchecks implementati utilizzando le [API python](https://research.cs.wisc.edu/htcondor/manual/v8.1/6_7Python_Bindings.html) di HTCondor, fanno un semplice check sulla presenza dei processi utili allo specifico ruolo del container. Tuttavia, causa bug noti della piattaforma Mesos Marathon, non è ancora totalmente funzionante per le applicazioni che utilizzano Calico. Tali bug sono stati risolti con Mesos >= 1.0.0-rc3 e Marathon >= 1.2.0-RC8.
+
+Esempi su come utilizzare gli healthcheck sono anch'essi nella cartella examples/marathon/.
 
 #### Known issue
 
 * L'operazione di unmount è a carico dell'utente. Questo potrebbe lasciare dei mount point appesi sugli executor.
-* Healthchecks completi solo dalla versione Marathon >= 1.2.0. 
+* Healthchecks ancora primitivi.
 
 ### Accesso SSH
 
@@ -271,7 +233,3 @@ john@854b194757b8:~$ condor_q
 	  -u inject user	inject a user without root privileges for submitting jobs accessing via ssh. -p password required
 	  -p password		user password (see -u attribute).
 ```
-## TBD
-
-* Gestione della sicurezza
-* Sistemare i log

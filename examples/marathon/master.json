@@ -1,5 +1,5 @@
 {
-  "id": "/master",
+  "id": "/htcondor-master",
   "cpus": 1,
   "mem": 512,
   "instances": 1,
@@ -15,7 +15,12 @@
       ]
     }
   },
+    "ipAddress": {
+    },
   "args": [
-    "-m"
+    "-m",
+    "-c",
+    "<URL_CONDOR_CONFIG"
   ]
 }
+
