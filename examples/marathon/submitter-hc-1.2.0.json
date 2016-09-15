@@ -6,22 +6,28 @@
     ["hostname", "CLUSTER", "nessun-ricordo-1.openstacklocal"]
   ],
   "instances": 1,
-  "container": {
+    "container": {
     "type": "DOCKER",
     "docker": {
       "image": "dscnaf/htcondor-debian",
-      "privileged": false,
-      "forcePullImage": true,
-      "parameters": [
-        {
-          "key": "net",
-          "value": "htcondor"
-        }
-      ]
+      "network": "USER",
     }
   },
-    "ipAddress": {
-    },
+  "ipAddress": {
+    "networkName": "my-calico-net"
+  },
+  "healthChecks": [
+    {
+      "path": "/health",
+      "protocol": "HTTP",
+      "gracePeriodSeconds": 300,
+      "intervalSeconds": 60,
+      "timeoutSeconds": 20,
+      "maxConsecutiveFailures": 3,
+      "ignoreHttp1xx": false,
+      "port": 5000
+    }
+  ],
   "args": [
     "-s",
     "<MASTER_IP>",
@@ -30,7 +36,7 @@
     "-u",
     "<USER>",
     "-p",
-    "<PWD>",
+    "<PWD",
     "-k",
     "<URL_PUBLIC_KEY>"
   ]

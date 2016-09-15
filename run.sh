@@ -89,7 +89,7 @@ fi;
 
 # Prepare SSH access
 if [ -n "$KEY_URL" -a -n "$SSH_ACCESS" ]; then
-  wget -O - "$KEY_URL" /root/.ssh/authorized_keys
+  wget -O - "$KEY_URL" > /root/.ssh/authorized_keys
 fi
 
 if [ -n "$USER" -a -n "$PASSWORD" -a -n "$SSH_ACCESS" ]; then
@@ -114,7 +114,7 @@ fi;
 
 # Prepare external config
 if [ -n "$CONFIG_MODE" ]; then
-  wget "$CONFIG_URL" /etc/condor/condor_config
+  wget -O - "$CONFIG_URL" > /etc/condor/condor_config
 fi
 
 # Prepare HTCondor configuration
