@@ -113,14 +113,14 @@ In seguito sono riportati i passi ad esempio per l'accesso ssh in un contesto co
 1. Aggiunta regola calico
 
 ```
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule show
+[root@mesos-host ~]# calicoctl profile htcondor rule show
 Inbound rules:
    1 allow from tag htcondor
    2 allow tcp to ports 5000
 Outbound rules:
    1 allow
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule add inbound allow tcp to ports 22
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule show
+[root@mesos-host ~]# calicoctl profile htcondor rule add inbound allow tcp to ports 22
+[root@mesos-host ~]# calicoctl profile htcondor rule show
 Inbound rules:
    1 allow from tag htcondor
    2 allow tcp to ports 5000
@@ -132,14 +132,21 @@ Outbound rules:
 2. Aggiunta regole di routing sull'host ospitante il submitter
 
 ```
-[root@nessun-ricordo-1 ~]# iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 22 -j DNAT  --to 192.168.0.26:22
-[root@nessun-ricordo-1 ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport 22 -j DNAT --to-destination 192.168.0.26:22
+[root@mesos-host ~]# iptables -A PREROUTING -t nat -i <HOST_INTERFACE> -p tcp --dport <PORT> -j DNAT  --to <CONTAINER_IP>:22
+[root@mesos-host ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport <PORT> -j DNAT --to-destination <CONTAINER_IP>:22
+```
+
+e.g.:
+
+```
+[root@mesos-host ~]# iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 2222 -j DNAT  --to 192.168.0.26:22
+[root@mesos-host ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport 2222 -j DNAT --to-destination 192.168.0.26:22
 ```
 
 3. Accesso dall'esterno
 
 ```
-rbucchi@ws-bucchi:~$ ssh -p 2222 rbucchi@131.154.96.147
+john@workstation:~$ ssh -p 2222 john@131.154.96.147
 Password:
 Welcome to Ubuntu 14.04.5 LTS (GNU/Linux 3.10.0-327.28.3.el7.x86_64 x86_64)
 
@@ -160,11 +167,11 @@ individual files in /usr/share/doc/*/copyright.
 Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
 applicable law.
 
-Last login: Wed Sep 14 14:14:28 2016 from ws-bucchi.cnaf.infn.it
-rbucchi@3211f3fc6b40:~$
+Last login: Wed Sep 14 14:14:28 2016 from workstation.local
+john@3211f3fc6b40:~$
 ```
 
-Dove 192.168.0.26 è l'ip del submitter (via calico) e 131.154.96.147 è l'host che lo ospita (nessun-ricordo-1).
+Dove 192.168.0.26 è l'ip del submitter (via calico) e 131.154.96.147 è l'host che lo ospita (mesos-host).
 
 *Nota:* questa soluzione è quella proposta dalla [documentazione](https://github.com/projectcalico/calico-containers/blob/master/docs/ExposePortsToInternet.md) Calico. E' in corso uno studio per una gestione meno statica e più fluida.
 
