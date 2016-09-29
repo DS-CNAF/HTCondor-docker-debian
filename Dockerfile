@@ -40,5 +40,6 @@ COPY    executor_healthcheck.py /opt/health/executor/healthcheck.py
 COPY    submitter_healthcheck.py /opt/health/submitter/healthcheck.py
 COPY 	sshd_config /etc/ssh/sshd_config
 COPY    run.sh /usr/local/sbin/run.sh
+RUN     apt-get install stress -y
 
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/sbin/run.sh"]
