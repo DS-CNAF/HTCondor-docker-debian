@@ -19,6 +19,13 @@ usage() {
 	  -k url-to-public-key	url to public key for ssh access to root
 	  -u inject user	inject a user without root privileges for submitting jobs accessing via ssh. -p password required
 	  -p password		user password (see -u attribute).
+	  
+	  Probes:
+	    -i influx-db        influx database
+	    -j influx-user      influx user credential
+	    -l influx-password  influx password credential
+	    -h influx-db-host   host as IP or hostname in which influx db is
+	    -t influx-db-tag	extra tags to include with all metrics (comma-separated key:value)
 	EOF
   exit 1
 }
@@ -35,7 +42,14 @@ CONFIG_URL=
 KEY_URL=
 USER=
 PASSWORD=
-while getopts ':me:s:c:k:u:p:' OPTION; do
+
+# Probes
+INFLUXDB=
+PROBE_DB=
+INFLUXDB_USER=
+INFLUXDB_PWD=
+PROBE_TAG=
+while getopts ':me:s:c:k:u:p:i:j:l:h:t:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
@@ -69,11 +83,31 @@ while getopts ':me:s:c:k:u:p:' OPTION; do
       [ -n "$USER" -o -z "$OPTARG" ] && usage
       SSH_ACCESS='yes'
       USER="$OPTARG"
-    ;;  
+    ;;       
     p)
       [ -n "$PASSWORD" -o -z "$OPTARG" ] && usage
       SSH_ACCESS='yes'
       PASSWORD="$OPTARG"
+    ;;  
+    i)
+      [ -n "$PROBE_DB" -o -z "$OPTARG" ] && usage
+      PROBE_DB="$OPTARG"
+    ;;  
+    j)
+      [ -n "$INFLUXDB_USER" -o -z "$OPTARG" ] && usage
+      INFLUXDB_USER="$OPTARG"
+    ;;  
+    l)
+      [ -n "$INFLUXDB_PWD" -o -z "$OPTARG" ] && usage
+      INFLUXDB_PWD="$OPTARG"
+    ;;  
+    h)
+      [ -n "$INFLUXDB" -o -z "$OPTARG" ] && usage
+      INFLUXDB="$OPTARG"
+    ;;  
+    t)
+      [ -n "$PROBE_TAG" -o -z "$OPTARG" ] && usage
+      PROBE_TAG="$OPTARG"
     ;;  
     *)
       usage
@@ -109,6 +143,25 @@ stderr_logfile=/var/log/ssh/sshd.stderr.log
 stderr_logfile_maxbytes=1MB
 stderr_logfile_backups=10
 EOL
+
+fi;
+
+# PROBE CONFIGURATION
+if [ -n "$INFLUXDB" ]; then
+
+  cat >> /etc/supervisor/conf.d/supervisord.conf << EOL
+[program:probes]
+command=/opt/probes/bin/condor_probe.py /opt/probes/etc/condor-probe.cfg
+environment=INFLUXDB_PASSWORD=$INFLUXDB_PWD,INFLUXDB_USERNAME=$INFLUXDB_USER
+autostart=true
+EOL
+
+# Prepare Probe configuration
+sed -i \
+  -e 's/@INFLUXDB@/'"$INFLUXDB"'/' \
+  -e 's/@PROBE_DB@/'"$PROBE_DB"'/' \
+  -e 's/@PROBE_TAG@/'"$PROBE_TAG"'/' \
+  /opt/probes/etc/condor-probe.cfg 
 
 fi;
 

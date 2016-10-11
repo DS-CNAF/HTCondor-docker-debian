@@ -11,7 +11,7 @@ EXPOSE  22
 ADD     https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /sbin/tini
 RUN	set -ex \
 	# CONDOR
-	&& apt-get update && apt-get install -y wget procps curl \
+	&& apt-get update && apt-get install -y wget git procps curl \
 	&& chmod +x /sbin/tini \
 	&& echo "deb http://research.cs.wisc.edu/htcondor/ubuntu/stable/ trusty contrib" >> /etc/apt/sources.list \
 	&& wget -qO - http://research.cs.wisc.edu/htcondor/ubuntu/HTCondor-Release.gpg.key | apt-key add - \
@@ -27,12 +27,17 @@ RUN	set -ex \
         && mkdir /var/log/oneclient \
 	# HEALTHCHECKS
 	&& mkdir -p /opt/health/master/ /opt/health/executor/ /opt/health/submitter/ \
-	&& apt-get install -y python-pip && pip install Flask \
+	&& apt-get install -y python-pip && pip install virtualenv Flask \
 	# SSHD
 	&& apt-get install -y openssh-server && mkdir -p /var/log/ssh/ && mkdir /var/run/sshd && mkdir /root/.ssh \
+	# MONITOR
+        && apt-get install stress -y \
+        && git clone https://github.com/fifemon/probes /opt/probes \
+	&& virtualenv --system-site-packages /opt/probes/venv && /bin/bash -c "source /opt/probes/venv/bin/activate" && pip install supervisor influxdb \
 	# CLEAN
-	&& apt-get -y remove python-pip \
+	&& apt-get -y remove python-pip git \
         && apt-get clean all 
+
 COPY 	supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY    condor_config /etc/condor/condor_config
 COPY    master_healthcheck.py /opt/health/master/healthcheck.py
@@ -40,6 +45,6 @@ COPY    executor_healthcheck.py /opt/health/executor/healthcheck.py
 COPY    submitter_healthcheck.py /opt/health/submitter/healthcheck.py
 COPY 	sshd_config /etc/ssh/sshd_config
 COPY    run.sh /usr/local/sbin/run.sh
-RUN     apt-get install stress -y
+COPY    condor-probe.cfg /opt/probes/etc/condor-probe.cfg
 
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/sbin/run.sh"]
