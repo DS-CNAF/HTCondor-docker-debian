@@ -132,14 +132,14 @@ Outbound rules:
 2. Aggiunta regole di routing sull'host ospitante il submitter
 
 ```
-[root@nessun-ricordo-1 ~]# iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 22 -j DNAT  --to 192.168.0.26:22
-[root@nessun-ricordo-1 ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport 22 -j DNAT --to-destination 192.168.0.26:22
+[root@nessun-ricordo-1 ~]# iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 2222 -j DNAT  --to 192.168.0.26:22
+[root@nessun-ricordo-1 ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport 2222 -j DNAT --to-destination 192.168.0.26:22
 ```
 
 3. Accesso dall'esterno
 
 ```
-rbucchi@ws-bucchi:~$ ssh -p 2222 rbucchi@131.154.96.147
+john@ws-john:~$ ssh -p 2222 john@131.154.96.147
 Password:
 Welcome to Ubuntu 14.04.5 LTS (GNU/Linux 3.10.0-327.28.3.el7.x86_64 x86_64)
 
@@ -160,8 +160,8 @@ individual files in /usr/share/doc/*/copyright.
 Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
 applicable law.
 
-Last login: Wed Sep 14 14:14:28 2016 from ws-bucchi.cnaf.infn.it
-rbucchi@3211f3fc6b40:~$
+Last login: Wed Sep 14 14:14:28 2016 from ws-john
+john@3211f3fc6b40:~$
 ```
 
 Dove 192.168.0.26 è l'ip del submitter (via calico) e 131.154.96.147 è l'host che lo ospita (nessun-ricordo-1).
