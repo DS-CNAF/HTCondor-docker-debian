@@ -1,20 +1,27 @@
-# Docker container per HTCondor 
+# HTCondor Docker containers 
 
-Dockerizzazione di HTCondor dei tre nodi: Master, Submit ed Executor.
-L'immagine di base utilizzata è Ubunty Trusty LTS e si fa riferimento alla versione stable di condor (https://research.cs.wisc.edu/htcondor/ubuntu/).
+HTCondor dockerized in three nodes: Master, Submitter and Executor.
+Ubuntu Trusty LTS is the base image used and condor version refer to the [last stable version](https://research.cs.wisc.edu/htcondor/ubuntu/).
 
-Per controllare e gestire i diversi processi lanciati nei singoli container, si utilizza supervisord.
+Supervisord is used in order to control different processes spawn.
+Many different features are implemented as described below, such as [calico](https://www.projectcalico.org/), [marathon](https://mesosphere.github.io/marathon/), [onedata](https://onedata.org/) support.
 
-E' possibile utilizzare Oneclient per esportare i dati.
-
-## Architettura di riferimento
+## Architecture
 
 ![Architettura HTCondor](architecture.png)
 
-## Come utilizzare i Dockerfile
+## Feature
+* [simple Run](#nodes-run)
+* [Calico Support](#calico-support)
+* [Onedata Support](#onedata-support)
+* [Marathon Support](#marathon-support)
+* [Healthchecks](#Healthchecks)
+* [SSH access](#ssh-access)
+* [condor_config](#condor_config)
+* [Logs](#LOGS)
 
-### Run dei nodi
-Nodo Master:
+### Nodes run
+Master node:
 
 ```bash 
 $ docker run -d --name=condormaster dscnaf/htcondor-debian -m
@@ -33,157 +40,20 @@ $ docker exec -it condormaster ip addr
        valid_lft forever preferred_lft forever
 ```
 
+Submitter node:
+
 ```bash 
 $ docker run -d --name=condorsubmit dscnaf/htcondor-debian -s <MASTER_IP>
 ```
 
-Lanciare un numero di nodi executor a piacere:
+Then launch an arbitrary number of executors:
 
 ```bash 
 $ docker run -d --name=condorexecute dscnaf/htcondor-debian -e <MASTER_IP>
 ```
+### Calico support
 
-### Uso di Oneclient
-
-All'interno dei container è prevista la presenza di oneclient per l'accesso esterno dei dati. L'utente può così utilizzare contestualmente al run del job il mount del FS all'interno della sua sandbox.
-Per poterlo utilizzare sono necessari i seguenti requisiti:
-* accesso ad un oneprovider
-* connettività esterna (via --nat-outgoing nel caso dell'utilizzo di Calico)
-* container privilegiato (--privileged)
-
-```bash
-$ docker run -d --name=condor<TYPE> --privileged dscnaf/htcondor-debian -e <MASTER_IP>
-## on submitter
-john@submitter:~$ cat touch.sh 
-#!/bin/bash
-set -ex
-export ONECLIENT_AUTHORIZATION_TOKEN=xxxxxxxxxxxxxxxxxxxx
-export PROVIDER_HOSTNAME=<ENDPOINT>
-mkdir oneclient
-oneclient --no_check_certificate --authentication token oneclient
-cd oneclient/John\'s\ space
-touch imhere.txt
-cd ../..
-fusermount -u oneclient 
-```
-
-### Run in Marathon
-
-Nella directory examples/marathon sono presenti i file .json per lanciare i container su un cluster mesos/marathon con connettività via Calico. Gli esempi sono comprensivi di vari parametri facoltativi spiegati nella sezione **Usage** o nelle sezioni specifiche. Per ulteriori accorgimenti, fare riferimento alla pagina ufficiale della [documentazione](https://mesosphere.github.io/marathon/docs/) Marathon.
-
-```bash
-curl -XPOST -H "Content-Type: application/json" http://<MARATHON_IP>/v2/apps -d @<FILE.json>
-```
-
-### Healthchecks
-
-Gli healthchecks implementati utilizzando le [API python](https://research.cs.wisc.edu/htcondor/manual/v8.1/6_7Python_Bindings.html) di HTCondor, fanno un semplice check sulla presenza dei processi utili allo specifico ruolo del container. Tuttavia, causa bug noti della piattaforma Mesos Marathon, non è ancora totalmente funzionante per le applicazioni che utilizzano Calico. Tali bug sono stati risolti con Mesos >= 1.0.0-rc3 e Marathon >= 1.2.0-RC8.
-
-Esempi su come utilizzare gli healthcheck sono anch'essi nella cartella examples/marathon/.
-
-#### Known issue
-
-* L'operazione di unmount è a carico dell'utente. Questo potrebbe lasciare dei mount point appesi sugli executor.
-* Healthchecks ancora primitivi.
-
-### Accesso SSH
-
-I container vengono lanciati con il demone `sshd` disattivato di default. Se tuttavia è necessario l'accesso via ssh (e.g.: non è possibile accedere all'host ospitante il submitter per sottomettere i job condor), è possibile attivare il demone in due modi:
-
-1. via **password**:
-
-   lanciando il container con i parametri `-u` (user) e `-p` (password). Inietterà un solo utente senza privilegi di `root`
-```
-docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -u john -p j0hn
-```
-
-2. via **certificate**
-
-   lanciando il container con il parametro `-k` (public Key), il servizio ssh verrà attivato e la chiave pubblica passata verrò iniettata in `/root/.ssh/authorized_keys`.  Nota che il certificato dev'essere raggiungibile via `wget`. Il passaggio di file da file system locale non è possibile.
-```
-docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -k <url_to_public_key>
-```
-
-I due metodi sopra descritti non sono mutualmente esclusivi.
-
-#### Esempio
-
-In seguito sono riportati i passi ad esempio per l'accesso ssh in un contesto controllato da Calico.
-
-1. Aggiunta regola calico
-
-```
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule show
-Inbound rules:
-   1 allow from tag htcondor
-   2 allow tcp to ports 5000
-Outbound rules:
-   1 allow
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule add inbound allow tcp to ports 22
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule show
-Inbound rules:
-   1 allow from tag htcondor
-   2 allow tcp to ports 5000
-   3 allow tcp to ports 22
-Outbound rules:
-   1 allow
-```
-
-2. Aggiunta regole di routing sull'host ospitante il submitter
-
-```
-[root@nessun-ricordo-1 ~]# iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 2222 -j DNAT  --to 192.168.0.26:22
-[root@nessun-ricordo-1 ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport 2222 -j DNAT --to-destination 192.168.0.26:22
-```
-
-3. Accesso dall'esterno
-
-```
-john@ws-john:~$ ssh -p 2222 john@131.154.96.147
-Password:
-Welcome to Ubuntu 14.04.5 LTS (GNU/Linux 3.10.0-327.28.3.el7.x86_64 x86_64)
-
- * Documentation:  https://help.ubuntu.com/
-
-The programs included with the Ubuntu system are free software;
-the exact distribution terms for each program are described in the
-individual files in /usr/share/doc/*/copyright.
-
-Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
-applicable law.
-
-
-The programs included with the Ubuntu system are free software;
-the exact distribution terms for each program are described in the
-individual files in /usr/share/doc/*/copyright.
-
-Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
-applicable law.
-
-Last login: Wed Sep 14 14:14:28 2016 from ws-john
-john@3211f3fc6b40:~$
-```
-
-Dove 192.168.0.26 è l'ip del submitter (via calico) e 131.154.96.147 è l'host che lo ospita (nessun-ricordo-1).
-
-*Nota:* questa soluzione è quella proposta dalla [documentazione](https://github.com/projectcalico/calico-containers/blob/master/docs/ExposePortsToInternet.md) Calico. E' in corso uno studio per una gestione meno statica e più fluida.
-
-### Modifica condor_config
-
-Lanciando il container con il parametro `-c` (file di Configurazione), è possibile iniettare all'istanza un file di configurazione condor diverso da quello di default. Nota che il file dev'essere raggiungibile via `wget`. Il passaggio di file da file system locale non è possibile.
-```
-docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -c <url_to_condor_config>
-```
-**Known issue** i parametri `DAEMON_LIST = MASTER, @ROLE_DAEMONS@` e `CONDOR_HOST = @CONDOR_HOST@` devono essere così popolati per permettere al passaggio dei parametri `-m`, `-s`, `-e` di avere effetto.  Un template diverso di `condor_config` richiede ugualmente che venga esplicitato il ruolo del container (master, submitter o executor), ma la gestione dei diversi file di configurazione è a carico dell'utente.
-
-### LOGS
-```bash
-docker logs <nome_container>
-```
-
-### Test su nodi calico
-
-I container sono chiaramente agnostici rispetto il layer di rete. In seguito c'è un esempio di test di comunicazione tra container su host diversi (calico01 - calico0(x)) tramite driver di rete [calico](https://www.projectcalico.org/)
+Containers are agnostic on network layer. As follows, a test will be shown in which containers hosted on different hosts (calico01 - calico0(x)) can communicate via [calico](https://www.projectcalico.org/) network driver.
 ```bash
 core@calico-01 ~ $ calicoctl pool add 192.168.0.0/16
 core@calico-01 ~ $ calicoctl pool show
@@ -228,7 +98,151 @@ PING 192.168.142.0 (192.168.142.0): 48 data bytes
 round-trip min/avg/max/stddev = 0.048/0.212/0.376/0.164 ms
 ```
 
-### Test applicativo HTCondor
+### Onedata support
+
+Inside containers there is [oneclient](https://onedata.org/) tool for external data access. Users can so use during job run File System mount inside their sandbox.
+Requirements:
+* oneprovider access
+* external connectivity (--nat-outgoing is required when using Calico)
+* privileged containers (executors must be --privileged)
+
+```bash
+$ docker run -d --name=condor<TYPE> --privileged dscnaf/htcondor-debian -e <MASTER_IP>
+## on submitter
+john@submitter:~$ cat touch.sh 
+#!/bin/bash
+set -ex
+export ONECLIENT_AUTHORIZATION_TOKEN=xxxxxxxxxxxxxxxxxxxx
+export PROVIDER_HOSTNAME=<ENDPOINT>
+mkdir oneclient
+oneclient --no_check_certificate --authentication token oneclient
+cd oneclient/John\'s\ space
+touch imhere.txt
+cd ../..
+fusermount -u oneclient 
+```
+
+#### Known issue
+
+* `unmount` op is due to user still. Be careful with hanging mountpoint in executor hosts.
+
+### Marathon support
+
+Inside `examples/marathon` folder different `.json` file as example are stored for launching containers in mesos/marathon clusters. Examples contains different optional features. Please refer to [usage](#usage) or specific sections. For other requirements, please refer to official [marathon docs](https://mesosphere.github.io/marathon/docs/)
+
+`.json` files can injected via GUI (from newer marathon versions) or via API as follows:
+
+```bash
+curl -XPOST -H "Content-Type: application/json" http://<MARATHON_IP>/v2/apps -d @<FILE.json>
+```
+
+### Healthchecks
+
+Healthchecks are implemented using HTCondor [API python](https://research.cs.wisc.edu/htcondor/manual/v8.1/6_7Python_Bindings.html). They simple check presence of used processes in container specific role. Nevertheless, due to known bugs in Mesos Marathon platform, this feature is no totally working yet if using Calico drivers. These bugs are resolved in Mesos >= 1.0.0-rc3 and Marathon >= 1.2.0-RC8.
+
+Healthchecks examples are too in `examples/marathon` folder.
+
+#### Known issue
+
+* Healthchecks still primitive
+
+### SSH access
+
+Containers are launched with `sshd` daemon disabled as default. Nevertheless could be activated if needed (e.g.: access to hosting submitter host) via two methods:
+
+1. via **password**:
+
+   use `-u` (user) and `-p` (password) parameters. It will inject a user without root privileges
+```
+docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -u john -p j0hn
+```
+
+2. via **certificate**
+
+   using `-k` (public Key) parameter, ssh service will be activated and public key stored in `/root/.ssh/authorized_keys`. Public key must be reachable via net.  File system exchange is not possible.
+```
+docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -k <url_to_public_key>
+```
+
+These two methods are not mutually exclusive
+
+#### SSH access to calico network provided container
+
+1. Adding calico rule
+
+```
+[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule show
+Inbound rules:
+   1 allow from tag htcondor
+   2 allow tcp to ports 5000
+Outbound rules:
+   1 allow
+[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule add inbound allow tcp to ports 22
+[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule show
+Inbound rules:
+   1 allow from tag htcondor
+   2 allow tcp to ports 5000
+   3 allow tcp to ports 22
+Outbound rules:
+   1 allow
+```
+
+2. Routing rule adding on hosting submitter host
+
+```
+[root@nessun-ricordo-1 ~]# iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 2222 -j DNAT  --to 192.168.0.26:22
+[root@nessun-ricordo-1 ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport 2222 -j DNAT --to-destination 192.168.0.26:22
+```
+
+3. External access
+
+```
+john@ws-john:~$ ssh -p 2222 john@131.154.96.147
+Password:
+Welcome to Ubuntu 14.04.5 LTS (GNU/Linux 3.10.0-327.28.3.el7.x86_64 x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+Last login: Wed Sep 14 14:14:28 2016 from ws-john
+john@3211f3fc6b40:~$
+```
+
+Where 192.168.0.26 is submitter IP (via calico) and 131.154.96.147 is the hosting node (nessun-ricordo-1).
+
+*Note:* this solution is reported as calico [docs](https://github.com/projectcalico/calico-containers/blob/master/docs/ExposePortsToInternet.md). 
+
+### condor_config
+
+`-c` (configuration file) parameter, permit to inject a different configuration file in container instances. Configuration file must be reachable via net.  File system exchange is not possible.
+```
+docker run  -d --name=sub --net=htcondor dscnaf/htcondor-debian -s 192.168.0.152 -c <url_to_condor_config>
+```
+
+#### Known issue
+
+* `DAEMON_LIST = MASTER, @ROLE_DAEMONS@` and `CONDOR_HOST = @CONDOR_HOST@` parameters should be present even in a different `condor_config` template. Different template is in full user charge. 
+
+### Logs
+
+```bash
+docker logs <container_name>
+```
+### Functional HTCondor test
 
 ```bash
 core@calico-01 ~ $ docker exec -it condorsubmit bash
