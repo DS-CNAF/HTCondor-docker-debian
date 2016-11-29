@@ -7,7 +7,7 @@ SUBMITTER_DAEMONS="SCHEDD"
 
 usage() {
   cat <<-EOF
-	usage: $0 -m|-e master-address|-s master-address [-c url-to-config] [-k url-to-public-key] [-u inject user -p password]
+	usage: $0 -m|-e master-address|-s master-address [-c url-to-config] [-k url-to-public-key] [-u inject user -p password] [-C Condor Connection Broker (CCB) -P Private Network Name]
 	
 	Configure HTCondor role and start supervisord for this container. 
 	
@@ -19,6 +19,8 @@ usage() {
 	  -k url-to-public-key	url to public key for ssh access to root
 	  -u inject user	inject a user without root privileges for submitting jobs accessing via ssh. -p password required
 	  -p password		user password (see -u attribute).
+	  -C ccb		Condor Connection Broker (CCB).
+	  -P private network	Private Network Name parameter for condor_config.
 	EOF
   exit 1
 }
@@ -35,7 +37,9 @@ CONFIG_URL=
 KEY_URL=
 USER=
 PASSWORD=
-while getopts ':me:s:c:k:u:p:' OPTION; do
+CCB=
+PRIVATE_NETWORK_NAME=
+while getopts ':me:s:c:k:u:p:C:P:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
@@ -75,6 +79,14 @@ while getopts ':me:s:c:k:u:p:' OPTION; do
       SSH_ACCESS='yes'
       PASSWORD="$OPTARG"
     ;;  
+    C)
+      [ -n "$CCB" -o -z "$OPTARG" ] && usage
+      CCB="$OPTARG"
+    ;;  
+    P)
+      [ -n "$PRIVATE_NETWORK_NAME" -o -z "$OPTARG" ] && usage
+      PRIVATE_NETWORK_NAME="$OPTARG"
+    ;;  
     *)
       usage
     ;;
@@ -84,6 +96,10 @@ done
 # Additional checks
 # USER XOR PASSWORD
 if [ \( -n "$PASSWORD" -a -z "$USER" \) -a \( -z "$PASSWORD" -a -n "$USER" \) ]; then
+  usage
+fi;
+# CCB and Private Network Name must be declared none or together
+if [ \( -n "$CCB" -a -z "$PRIVATE_NETWORK_NAME" \) -a \( -z "$CCB" -a -n "$PRIVATE_NETWORK_NAME" \) ]; then
   usage
 fi;
 
@@ -128,6 +144,12 @@ sed -i \
   -e 's/@ROLE@/'"$HEALTH_CHECK"'/' \
   /etc/supervisor/conf.d/supervisord.conf
 
-
+# Prepare HTCondor to CCB connection
+if [ -n "$CCB" -a -n "$PRIVATE_NETWORK_NAME" ]; then
+  cat >> /etc/condor/condor_config << _EOF_
+CCB_ADDRESS = $CCB
+PRIVATE_NETWORK_NAME = $PRIVATE_NETWORK_NAME
+_EOF_
+fi
 
 exec /usr/local/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
