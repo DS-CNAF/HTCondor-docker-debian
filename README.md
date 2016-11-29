@@ -171,14 +171,14 @@ These two methods are not mutually exclusive
 1. Adding calico rule
 
 ```
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule show
+[root@mesos-host ~]# calicoctl profile htcondor rule show
 Inbound rules:
    1 allow from tag htcondor
    2 allow tcp to ports 5000
 Outbound rules:
    1 allow
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule add inbound allow tcp to ports 22
-[root@nessun-ricordo-1 ~]# calicoctl profile htcondor rule show
+[root@mesos-host ~]# calicoctl profile htcondor rule add inbound allow tcp to ports 22
+[root@mesos-host ~]# calicoctl profile htcondor rule show
 Inbound rules:
    1 allow from tag htcondor
    2 allow tcp to ports 5000
@@ -190,14 +190,21 @@ Outbound rules:
 2. Routing rule adding on hosting submitter host
 
 ```
-[root@nessun-ricordo-1 ~]# iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 2222 -j DNAT  --to 192.168.0.26:22
-[root@nessun-ricordo-1 ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport 2222 -j DNAT --to-destination 192.168.0.26:22
+[root@mesos-host ~]# iptables -A PREROUTING -t nat -i <HOST_INTERFACE> -p tcp --dport <PORT> -j DNAT  --to <CONTAINER_IP>:22
+[root@mesos-host ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport <PORT> -j DNAT --to-destination <CONTAINER_IP>:22
+```
+
+e.g.:
+
+```
+[root@mesos-host ~]# iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 2222 -j DNAT  --to 192.168.0.26:22
+[root@mesos-host ~]# iptables -t nat -A OUTPUT -p tcp -o lo --dport 2222 -j DNAT --to-destination 192.168.0.26:22
 ```
 
 3. External access
 
 ```
-john@ws-john:~$ ssh -p 2222 john@131.154.96.147
+john@workstation:~$ ssh -p 2222 john@131.154.96.147
 Password:
 Welcome to Ubuntu 14.04.5 LTS (GNU/Linux 3.10.0-327.28.3.el7.x86_64 x86_64)
 
@@ -218,11 +225,12 @@ individual files in /usr/share/doc/*/copyright.
 Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
 applicable law.
 
-Last login: Wed Sep 14 14:14:28 2016 from ws-john
+Last login: Wed Sep 14 14:14:28 2016 from workstation
 john@3211f3fc6b40:~$
 ```
 
-Where 192.168.0.26 is submitter IP (via calico) and 131.154.96.147 is the hosting node (nessun-ricordo-1).
+Where 192.168.0.26 is submitter IP (via calico) and 131.154.96.147 is the hosting node (mesos-host).
+=======
 
 *Note:* this solution is reported as calico [docs](https://github.com/projectcalico/calico-containers/blob/master/docs/ExposePortsToInternet.md). 
 
