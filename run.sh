@@ -7,7 +7,7 @@ SUBMITTER_DAEMONS="SCHEDD"
 
 usage() {
   cat <<-EOF
-	usage: $0 -m|-e master-address|-s master-address [-c url-to-config] [-k url-to-public-key] [-u inject user -p password] [-C Condor Connection Broker (CCB) -P Private Network Name]
+	usage: $0 -m|-e master-address|-s master-address [-c url-to-config] [-k url-to-public-key] [-u inject user -p password] [-C Condor Connection Broker (CCB) -P Private Network Namei -S Shared Secret]
 	
 	Configure HTCondor role and start supervisord for this container. 
 	
@@ -21,6 +21,7 @@ usage() {
 	  -p password		user password (see -u attribute).
 	  -C ccb		Condor Connection Broker (CCB).
 	  -P private network	Private Network Name parameter for condor_config.
+	  -S shared secret	Shared secret.
 	EOF
   exit 1
 }
@@ -39,7 +40,8 @@ USER=
 PASSWORD=
 CCB=
 PRIVATE_NETWORK_NAME=
-while getopts ':me:s:c:k:u:p:C:P:' OPTION; do
+SHARED_SECRET=
+while getopts ':me:s:c:k:u:p:C:P:S:' OPTION; do
   case $OPTION in
     m)
       [ -n "$ROLE_DAEMONS" ] && usage
@@ -82,10 +84,14 @@ while getopts ':me:s:c:k:u:p:C:P:' OPTION; do
     C)
       [ -n "$CCB" -o -z "$OPTARG" ] && usage
       CCB="$OPTARG"
-    ;;  
+    ;;   
     P)
       [ -n "$PRIVATE_NETWORK_NAME" -o -z "$OPTARG" ] && usage
       PRIVATE_NETWORK_NAME="$OPTARG"
+    ;; 
+    S)
+      [ -n "$SHARED_SECRET" -o -z "$OPTARG" ] && usage
+      SHARED_SECRET="$OPTARG"
     ;;  
     *)
       usage
@@ -145,11 +151,18 @@ sed -i \
   /etc/supervisor/conf.d/supervisord.conf
 
 # Prepare HTCondor to CCB connection
-if [ -n "$CCB" -a -n "$PRIVATE_NETWORK_NAME" ]; then
+if [ -n "$CCB" -a -n "$PRIVATE_NETWORK_NAME" -a -n "$SHARED_SECRET" ]; then
   cat >> /etc/condor/condor_config << _EOF_
 CCB_ADDRESS = $CCB
 PRIVATE_NETWORK_NAME = $PRIVATE_NETWORK_NAME
+SEC_PASSWORD_FILE= /etc/condor/condorSharedSecret
+SEC_DAEMON_INTEGRITY= REQUIRED
+SEC_DAEMON_AUTHENTICATION= REQUIRED
+SEC_DAEMON_AUTHENTICATION_METHODS= PASSWORD
+SEC_CLIENT_AUTHENTICATION_METHODS= FS, PASSWORD
 _EOF_
+
+  condor_store_cred -f /etc/condor/condorSharedSecret -p $SHARED_SECRET
 fi
 
 exec /usr/local/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
