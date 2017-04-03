@@ -48,6 +48,9 @@ ALLOW_WRITE = *
 ##  FLOCK_TO defines the central managers that your schedd will advertise itself to (i.e. these pools will give matches to your schedd).
 #FLOCK_TO = condor.cs.wisc.edu, cm.example.edu
 
+# Disable cgroup support by defining the base cgroup as an empty string
+BASE_CGROUP=
+
 ##--------------------------------------------------------------------
 ## Values set by the rpm patch script:
 ##--------------------------------------------------------------------
