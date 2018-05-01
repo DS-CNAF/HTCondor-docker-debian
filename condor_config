@@ -69,7 +69,7 @@ BIN     = $(RELEASE_DIR)/bin
 LIB = $(RELEASE_DIR)/lib64/condor
 INCLUDE = $(RELEASE_DIR)/include/condor
 SBIN    = $(RELEASE_DIR)/sbin
-LIBEXEC = $(RELEASE_DIR)/libexec/condor
+LIBEXEC = $(RELEASE_DIR)/lib/condor/libexec
 SHARE   = $(RELEASE_DIR)/share/condor
 
 PROCD_ADDRESS = $(RUN)/procd_pipe
